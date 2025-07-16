@@ -15,8 +15,12 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+    private final UserRepository userRepository;
+
     @Autowired
-    private UserRepository userRepository;
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public User save(User user) {
         return userRepository.save(user);
@@ -35,13 +39,11 @@ public class UserService {
     }
 
     public User update(Long id, User user) {
-        Optional<User> existingUserOptional = userRepository.findById(id);
-        if (existingUserOptional.isPresent()) {
-            user.setId(id);
-            return userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found with id: " + id);
-        }
+        User existingUser = userRepository.findById(id).orElseThrow(() ->
+                new RuntimeException("User not found with id: " + id));
+        existingUser.setName(user.getName());
+        existingUser.setEmail(user.getEmail()); // Update other fields as necessary
+        return userRepository.save(existingUser);
     }
 
     public List<User> findByNames(String name) {
@@ -56,15 +58,13 @@ public class UserService {
         return userRepository.findByDateBetween(startDate, endDate);
     }
 
-
-        public List<User> getAllUsers(int page, int size) {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<User> userPage = userRepository.findAll(pageable);
-            return userPage.getContent();
-        }
+    public List<User> getAllUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> userPage = userRepository.findAll(pageable);
+        return userPage.getContent();
+    }
+    public void deleteAll() {
+        userRepository.deleteAll();
     }
 
-//    public Page<User> getAllUsers(int page, int size) {
-//        return userRepository.findAll(PageRequest.of(page, size));
-
-
+}

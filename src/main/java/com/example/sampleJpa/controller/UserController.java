@@ -2,18 +2,19 @@ package com.example.sampleJpa.controller;
 
 import com.example.sampleJpa.Entity.User;
 import com.example.sampleJpa.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-//@RequestMapping("/api/users")
+@RequestMapping("/api/users")
+@Validated
 public class UserController {
 
     @Autowired
@@ -31,7 +32,7 @@ public class UserController {
     }
 
     @PostMapping("save")
-    public ResponseEntity<User> saveUser(@RequestBody User user) {
+    public ResponseEntity<User> saveUser(@Valid @RequestBody User user) {
         User savedUser = userService.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
@@ -41,10 +42,10 @@ public class UserController {
         User updatedUser = userService.update(id, user);
         return ResponseEntity.ok(updatedUser);
     }
-
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         userService.deleteById(id);
+        return ResponseEntity.ok("User deleted successfully");
     }
 
     @GetMapping("/filterByName")
@@ -70,8 +71,26 @@ public class UserController {
         return userService.getAllUsers(page, size);
     }
 
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ResponseEntity<String> handleValidExceotions(MethodArgumentNotValidException ex) {
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+//    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handlemultipleex(MethodArgumentNotValidException ex) {
+        StringBuilder errorMessage = new StringBuilder();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            errorMessage.append(error.getDefaultMessage()).append("\n");
+
+        });
+String finalErrorMessage=errorMessage.toString().trim();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).
+
+                body(finalErrorMessage);
+
 //    public Page<User> pagination(
 //            @RequestParam int page, @RequestParam int size) {
 //        return userService.getAllUsers(page, size);
     }
 
+}
